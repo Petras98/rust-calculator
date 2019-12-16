@@ -196,7 +196,7 @@ impl Operations for variable {
             power: num1.power,
             symbol: num1.symbol,
         }
-    } //main doesn't mod evaluator anywhere so that might have something to do with it
+    }
 }
 
 impl Operations for f64 {
@@ -252,27 +252,24 @@ impl fraction {
             denominator: self.denominator / gcd
         }
     }
-}
-
-//using Euclidean's algorithm
-fn gcd(num1: i64, num2: i64) -> i64{
-    if num1 > num2{
-        if num2 == 0{
-            return num1;
+  
+    //using Euclidean algorithm
+    fn gcd(num1: i64, num2: i64) -> i64{
+        let order = if num1 > num2 {
+          (num1, num2)
+        } else if num1 < num2 {
+          (num2, num1)
+        } else if num1 == num2 {
+          return num1;
+        };
+      
+        if order.0 == 0 {
+            return order.0;  
         }
-
-        gcd(num1 % num2, num2)
-    }else if num2 > num1 {
-        if num1 == 0{
-            return num2;
-        }
-
-        gcd(num2 % num1, num1)
-    }else{
-        return num1
+      
+        gcd(order.0 % order.1, order.1)
     }
 }
-
 
 #[cfg(test)]
 mod tests {
