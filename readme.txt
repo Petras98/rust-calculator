@@ -1,4 +1,5 @@
 An interpretative Calculator project written in Rust.
+<<<<<<< HEAD
 
 Program Structure (abstract):
 
@@ -27,3 +28,5 @@ src/
 			trig.rs
 	
 			etc..
+=======
+>>>>>>> b567eb1f786eae6b6343885f91e8b3988154d09d
