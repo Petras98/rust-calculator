@@ -187,8 +187,7 @@ impl Operations for variable {
             power: num1.power,
             symbol: num1.symbol,
         }
-    }
-
+    } //main doesn't mod evaluator anywhere so that might have something to do with it
 }
 
 impl Operations for f64 {
