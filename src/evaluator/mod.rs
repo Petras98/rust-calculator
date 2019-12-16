@@ -1,4 +1,4 @@
-mod operations;
+mod Operations;
 mod numbers;
 
 
@@ -10,7 +10,7 @@ pub fn create_stack(commands: &str) -> Vec<> {
 
 pub fn evaluate_stack(stack: Vec<>) {
 
-    let current_expr: Vec<Box<dyn operations>> = Vec::new();
+    let current_expr: Vec<Box<dyn Operations>> = Vec::new();
 
     loop { // loop through every operation in the stack
         let current_opperation = stack.pop();

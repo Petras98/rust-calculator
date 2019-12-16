@@ -16,77 +16,79 @@ struct variable {
     coefficient: f64,
 }
 
-enum types {
+pub enum Types {
     Float(f64),
     Fraction(fraction),
     Variable(variable),
 }
+// name space the type enum so that we dont have to prepend each case in our match statements with Types::
+use Types::{Float, Fraction, Variable};
 
-trait operations {
+trait Operations {
     // all of these methods want self, and another number, fraction or var, and will return either Ok(T), where t is
     // number, fraction or var, or a Err()
-    fn add<T: operations>(num1: Self, num2: types(T)) -> Result<Box<dyn operations>, ())>;
+    fn add(num1: Self, Types) -> Result<Types, ()>;
 
-    fn sub<T: operations>(num1: Self, num2: types(T)) -> Result<Box<dyn operations>, ())>;
+    fn sub(num1: Self, num2: Types) -> Result<Types, ()>;
 
-    fn multiply<T: operations>(num1: Self, num2: types(T)) -> Result<Box<dyn operations>, ())>;
+    fn multiply(num1: Self, num2: Types) -> Result<Types, ()>;
 
-    fn divide<T: operations>(num1: Self, num2: types(T)) -> Result<Box<dyn operations>, ())>;
+    fn divide(num1: Self, num2: Types) -> Result<Types, ()>;
 
     // Literally just changes the sign
     fn negative(num1: Self) -> Self;
 }
 
-impl operations for fraction {
-    fn add<T: operations>(num1: Self, num2: types(T)) -> Result<Box<dyn operations>, ())> {
+impl Operations for fraction {
+    fn add(num1: Self, num2: Types) -> Result<Types, ()> {
         match num2 {
-            Float(value) => Ok(value + (num1.numerator/num1.denominator) as f64,
-            Fraction(value) => Ok(fraction {
+            Float(value) => Ok(Float(value + (num1.numerator/num1.denominator) as f64)),
+            Fraction(value) => Ok(Fraction(fraction {
                 numerator: num1.numerator * value.denominator + value.numerator * num1.denominator,
                 denominator: num1.denominator * value.denominator,
-            }),
-            Variable(value) => Err()
-        }
-    }
-
-    fn sub<T: operations>(num1: Self, num2: types(T)) -> Result<Box<dyn operations>, ())> {
-        match num2 {
-            Float(value) => Ok(value - (num1.numerator/num1.denominator) as f64,
-            Fraction(value) => Ok(fraction {
-                numerator: num1.numerator * value.denominator - value.numerator * num1.denominator,
-                denominator: num1.denominator * value.denominator,
-            }),
+            })),
             Variable(value) => Err(())
         }
     }
 
-    fn multiply<T: operations>(num1: Self, num2: types(T)) -> Result<Box<dyn operations>, ())> {
+    fn sub(num1: Self, num2: Types) -> Result<Types, ()> {
         match num2 {
-            Float(value) => Ok(value * (num1.numerator/num1.denominator) as f64,
-            Fraction(value) => Ok(fraction {
-                numerator: num1.numerator * value.numerator,
+            Float(value) => Ok(Float(value - (num1.numerator/num1.denominator) as f64)),
+            Fraction(value) => Ok(Fraction(fraction {
+                numerator: num1.numerator * value.denominator - value.numerator * num1.denominator,
                 denominator: num1.denominator * value.denominator,
-            }),
-            Variable(value) => Ok(variable {
-                symbol: value.symbol,
-                power: value.power,
-                coefficient: value.coefficient * (num1.numerator/num1.denominator) as f64
-            }),
+            })),
+            Variable(value) => Err(())
         }
     }
 
-    fn divide<T: operations>(num1: Self, num2: types(T)) -> Result<Box<dyn operations>, ())> {
+    fn multiply(num1: Self, num2: Types) -> Result<Types, ()> {
         match num2 {
-            Float(value) => Ok(value * (num1.denominator/num1.numerator) as f64,
-            Fraction(value) => Ok(fraction {
+            Float(value) => Ok(Float(value * (num1.numerator/num1.denominator) as f64)),
+            Fraction(value) => Ok(Fraction(fraction {
+                numerator: num1.numerator * value.numerator,
+                denominator: num1.denominator * value.denominator,
+            })),
+            Variable(value) => Ok(Variable(variable {
+                symbol: value.symbol,
+                power: value.power,
+                coefficient: value.coefficient * (num1.numerator/num1.denominator) as f64
+            })),
+        }
+    }
+
+    fn divide(num1: Self, num2: Types) -> Result<Types, ()> {
+        match num2 {
+            Float(value) => Ok(Float(value * (num1.denominator/num1.numerator) as f64)),
+            Fraction(value) => Ok(Fraction(fraction {
                 numerator: num1.numerator * value.denominator,
                 denominator: num1.denominator * value.numerator,
-            }),
-            Variable(value) => Ok(variable {
+            })),
+            Variable(value) => Ok(Variable(variable {
                 symbol: value.symbol,
-                power: value.power * -1,
+                power: value.power * -1 as f64,
                 coefficient: value.coefficient * (num1.denominator/num1.numerator) as f64
-            }),
+            })),
         }
     }
 
@@ -98,90 +100,90 @@ impl operations for fraction {
     }
 }
 
-impl operations for variable {
-    fn add<T: operations>(num1: Self, num2: types(T)) -> Result<Box<dyn operations>, ())> {
+impl Operations for variable {
+    fn add(num1: Self, num2: Types) -> Result<Types, ()> {
         match num2 {
             Float(value) => Err(()),
             Fraction(value) => Err(()),
             Variable(value) => if value.symbol == num1.symbol && value.power == num1.power {
-                variable {
+                Ok(Variable(variable {
                     symbol: value.symbol,
                     coefficient: value.coefficient + num1.coefficient,
                     power: value.power,
-                }
+                }))
             } else {
                  Err(())
             },
         }
     }
 
-    fn sub<T: operations>(num1: Self, num2: types(T)) -> Result<Box<dyn operations>, ())> {
+    fn sub(num1: Self, num2: Types) -> Result<Types, ()> {
         match num2 {
             Float(value) => Err(()),
             Fraction(value) => Err(()),
             Variable(value) => if value.symbol == num1.symbol && value.power == num1.power {
-                variable {
+                Ok(Variable(variable {
                     symbol: value.symbol,
                     coefficient: value.coefficient - num1.coefficient,
                     power: value.power,
-                }
+                }))
             } else {
-                 Err(()),
-            }
+                 Err(())
+             },
         }
     }
 
-    fn multiply<T: operations>(num1: Self, num2: types(T)) -> Result<Box<dyn operations>, ())> {
+    fn multiply(num1: Self, num2: Types) -> Result<Types, ()> {
         match num2 {
-            Float(value) => Ok(variable {
+            Float(value) => Ok(Variable(variable {
                 symbol: num1.symbol,
                 coefficient: num1.coefficient * value,
                 power: num1.power,
-            }),
-            Fraction(value) => Ok( variable {
+            })),
+            Fraction(value) => Ok(Variable(variable {
                 symbol: num1.symbol,
-                coefficient: (num2.numerator / num2.denominator) as float,
+                coefficient: (value.numerator / value.denominator) as f64,
                 power: num1.power,
-            },
+            })),
             Variable(value) => if value.symbol == num1.symbol {
-                variable {
+                Ok(Variable(variable {
                     symbol: value.symbol,
                     coefficient: value.coefficient * num1.coefficient,
                     power: num1.power + value.power,
-                }
+                }))
             } else {
-                Err(()),
-            }
+                Err(())
+            },
         }
     }
 
-    fn divide<T: operations>(num1: Self, num2: types(T)) -> Result<Box<dyn operations>, ())> {
+    fn divide(num1: Self, num2: Types) -> Result<Types, ()> {
         match num2 {
-            Float(value) => Ok(variable {
+            Float(value) => Ok(Variable(variable {
                 symbol: num1.symbol,
                 coefficient: num1.coefficient / value,
                 power: num1.power,
-            }),
-            Fraction(value) => Ok( variable {
+            })),
+            Fraction(value) => Ok(Variable(variable {
                 symbol: num1.symbol,
-                coefficient: (num2.numerator / num2.denominator) as float,
+                coefficient: (value.numerator / value.denominator) as f64,
                 power: num1.power,
-            },
+            })),
             Variable(value) => if value.symbol == num1.symbol {
-                variable {
+                Ok(Variable(variable {
                     symbol: value.symbol,
                     coefficient: value.coefficient / num1.coefficient,
                     power: num1.power - value.power,
-                }
+                }))
             } else {
-                Err( () ),
+                Err( () )
             }
         }
     }
 
     fn negative(num1: Self) -> Self {
         variable {
-            coefficient: num1.coefficient *-1,
+            coefficient: num1.coefficient * -1.0,
             power: num1.power,
             symbol: num1.symbol,
         }
@@ -189,41 +191,41 @@ impl operations for variable {
 
 }
 
-impl operations for f64 {
-    fn add<T: operations>(num1: Self, num2: types(T)) -> Result<Box<dyn operations>, ()> {
+impl Operations for f64 {
+    fn add(num1: Self, num2: Types) -> Result<Types, ()> {
         match num2 {
-            Float(value) => Ok(num2 + value),
-            Fraction(value) => Ok( num1 + (value.numerator / value.denominator) ) as float,
+            Float(value) => Ok(Float(num1 + value)),
+            Fraction(value) => Ok(Float(num1 + (value.numerator / value.denominator) as f64)),
             Variable(value) => Err( () ),
         }
     }
 
-    fn sub<T: operations>(num1: Self, num2: types(T)) -> Result<Box<dyn operations>, ())> {
+    fn sub(num1: Self, num2: Types) -> Result<Types, ()> {
         match num2 {
-            Float(value) => Ok(num1 - value),
-            Fraction(value) => Ok( num1 - (value.numerator / value.denominator) ) as float,
+            Float(value) => Ok(Float(num1 - value)),
+            Fraction(value) => Ok(Float(num1 - (value.numerator / value.denominator) as f64)),
             Variable(value) => Err(() ),
         }
     }
 
-    fn multiply<T: operations>(num1: Self, num2: types(T)) -> Result<Box<dyn operations>, ())>{
+    fn multiply(num1: Self, num2: Types) -> Result<Types, ()>{
         match num2 {
-            Float(value) => Ok(num1 * value),
-            Fraction(value) => Ok( num1 * (value.numerator / value.denominator) ) as float,
+            Float(value) => Ok(Float(num1 * value)),
+            Fraction(value) => Ok(Float(num1 * (value.numerator / value.denominator) as f64)),
             Variable(value) => Err( () ),
         }
     }
 
-    fn divide<T: operations>(num1: Self, num2: types(T)) -> Result<Box<dyn operations>, ()> {
+    fn divide(num1: Self, num2: Types) -> Result<Types, ()> {
         match num2 {
-            Float(value) => Ok(num1 / value),
-            Fraction(value) => Ok( num1 / (value.numerator / value.denominator) ) as float,
+            Float(value) => Ok(Float(num1 / value)),
+            Fraction(value) => Ok(Float(num1 / (value.numerator / value.denominator) as f64)),
             Variable(value) => Err(()),
         }
     }
 
     fn negative(num1: Self) -> Self {
-        num1 * -1
+        -num1
     }
 }
 
@@ -244,7 +246,10 @@ mod tests {
             coefficient: 4.0,
         };
 
-        let var3 = add(var1, var2).unwrap();
+        let var3 = match add(var1, var2).unwrap() {
+            Variable(some) => some,
+            _ => panic!(),
+        };
 
         assert_eq!(var3.coefficient, 5);
     }
@@ -262,7 +267,10 @@ mod tests {
             coefficient: 4.0,
         };
 
-        let var3 = add(var1, var2).unwrap();
+        let var3 = match add(var1, var2).unwrap() {
+            Variable(some) => some,
+            _ => panic!(),
+        };
 
         assert_ne!(var3.coefficient, 5);
     }
@@ -282,7 +290,7 @@ mod tests {
 
         match add(var, frac) {
             Ok(_) => panic!("Should've returned error!"),
-            Err(value) => assert_eq!(value, vec![var, frac]),
+            Err() => assert!(true),
         };
     }
 
@@ -299,7 +307,10 @@ mod tests {
             denominator: 4,
         };
 
-        let value = multiply(var, frac).unwrap();
+        let value = match multiply(var, frac).unwrap() {
+            Variable(var) => var,
+            _ => panic!(),
+        };
 
         assert_eq!(value, variable {
             symbol: 'y',
