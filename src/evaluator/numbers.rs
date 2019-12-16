@@ -4,12 +4,15 @@
 
 
 */
-
+#[derive(Debug)]
+#[derive(PartialEq)]
 struct fraction {
     numerator: i64,
     denominator: i64,
 }
 
+#[derive(Debug)]
+#[derive(PartialEq)]
 struct variable {
     symbol: char,
     power: f64,
@@ -22,12 +25,12 @@ pub enum Types {
     Variable(variable),
 }
 // name space the type enum so that we dont have to prepend each case in our match statements with Types::
-use Types::{Float, Fraction, Variable};
+use Types::*;
 
 trait Operations {
     // all of these methods want self, and another number, fraction or var, and will return either Ok(T), where t is
     // number, fraction or var, or a Err()
-    fn add(num1: Self, Types) -> Result<Types, ()>;
+    fn add(num1: Self, num2: Types) -> Result<Types, ()>;
 
     fn sub(num1: Self, num2: Types) -> Result<Types, ()>;
 
@@ -250,7 +253,7 @@ mod tests {
             _ => panic!(),
         };
 
-        assert_eq!(var3.coefficient, 5);
+        assert_eq!(var3.coefficient, 5.0);
     }
 
     #[test]
@@ -271,7 +274,7 @@ mod tests {
             _ => panic!(),
         };
 
-        assert_ne!(var3.coefficient, 5);
+        assert_ne!(var3.coefficient, 5.0);
     }
 
     #[test]
@@ -289,7 +292,7 @@ mod tests {
 
         match add(var, frac) {
             Ok(_) => panic!("Should've returned error!"),
-            Err() => assert!(true),
+            Err(_) => assert!(true),
         };
     }
 
