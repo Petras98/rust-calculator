@@ -4,6 +4,8 @@
 
 
 */
+
+
 #[derive(Debug)]
 #[derive(PartialEq)]
 #[allow(non_camel_case_types)]
@@ -54,7 +56,7 @@ impl Operations for fraction {
                 numerator: num1.numerator * value.denominator + value.numerator * num1.denominator,
                 denominator: num1.denominator * value.denominator,
             })),
-            Variable(value) => Err(())
+            Variable(_) => Err(())
         }
     }
 
@@ -65,7 +67,7 @@ impl Operations for fraction {
                 numerator: num1.numerator * value.denominator - value.numerator * num1.denominator,
                 denominator: num1.denominator * value.denominator,
             })),
-            Variable(value) => Err(())
+            Variable(_) => Err(())
         }
     }
 
@@ -110,8 +112,8 @@ impl Operations for fraction {
 impl Operations for variable {
     fn add(num1: Self, num2: Types) -> Result<Types, ()> {
         match num2 {
-            Float(value) => Err(()),
-            Fraction(value) => Err(()),
+            Float(_) => Err(()),
+            Fraction(_) => Err(()),
             Variable(value) => if value.symbol == num1.symbol && value.power == num1.power {
                 Ok(Variable(variable {
                     symbol: value.symbol,
@@ -126,8 +128,8 @@ impl Operations for variable {
 
     fn sub(num1: Self, num2: Types) -> Result<Types, ()> {
         match num2 {
-            Float(value) => Err(()),
-            Fraction(value) => Err(()),
+            Float(_) => Err(()),
+            Fraction(_) => Err(()),
             Variable(value) => if value.symbol == num1.symbol && value.power == num1.power {
                 Ok(Variable(variable {
                     symbol: value.symbol,
@@ -173,13 +175,13 @@ impl Operations for variable {
             })),
             Fraction(value) => Ok(Variable(variable {
                 symbol: num1.symbol,
-                coefficient: value.to_float(),
+                coefficient: num1.coefficient / value.to_float(),
                 power: num1.power,
             })),
             Variable(value) => if value.symbol == num1.symbol {
                 Ok(Variable(variable {
                     symbol: value.symbol,
-                    coefficient: value.coefficient / num1.coefficient,
+                    coefficient: num1.coefficient / value.coefficient,
                     power: num1.power - value.power,
                 }))
             } else {
@@ -202,7 +204,7 @@ impl Operations for f64 {
         match num2 {
             Float(value) => Ok(Float(num1 + value)),
             Fraction(value) => Ok(Float(num1 + value.to_float())),
-            Variable(value) => Err( () )
+            Variable(_) => Err( () )
         }
     }
 
@@ -211,7 +213,7 @@ impl Operations for f64 {
         match num2 {
             Float(value) => Ok(Float(num1 - value)),
             Fraction(value) => Ok(Float(num1 - value.to_float())),
-            Variable(value) => Err( () )
+            Variable(_) => Err( () )
         }
     }
 
@@ -240,6 +242,35 @@ impl fraction {
     fn to_float(self) -> f64 {
         self.numerator as f64 / self.denominator as f64
     }
+
+
+    fn simplify(self) -> fraction {
+        let gcd = gcd(self.numerator, self.denominator);
+
+        fraction {
+            numerator: self.numerator / gcd,
+            denominator: self.denominator / gcd
+        }
+    }
+}
+
+//using Euclidean's algorithm
+fn gcd(num1: i64, num2: i64) -> i64{
+    if num1 > num2{
+        if num2 == 0{
+            return num1;
+        }
+
+        gcd(num1 % num2, num2)
+    }else if num2 > num1 {
+        if num1 == 0{
+            return num2;
+        }
+
+        gcd(num2 % num1, num1)
+    }else{
+        return num1
+    }
 }
 
 
@@ -247,6 +278,7 @@ impl fraction {
 mod tests {
     use super::*;
 
+    /* Variable Type Tests Start */
     #[test]
     fn adding_variables_same_power() {
         let var1 = variable {
@@ -320,5 +352,132 @@ mod tests {
             power: 2.0,
             coefficient: 7.0
         })));
+    }
+
+    #[test]
+    fn divide_variable_by_fraction(){
+        let var = variable {
+            symbol: 'y',
+            power: 2.0,
+            coefficient: 4.0,
+        };
+
+        let frac = fraction {
+            numerator: 8,
+            denominator: 4,
+        };
+
+        let value = variable::divide(var, Fraction(frac));
+
+        assert_eq!(value, Ok(Variable(variable {
+            symbol: 'y',
+            power: 2.0,
+            coefficient: 2.0
+        })));
+    }
+
+    #[test]
+    fn divide_variable_by_variable(){
+        let var1 = variable {
+            symbol: 'y',
+            power: 3.0,
+            coefficient: 5.0,
+        };
+
+        let var2 = variable{
+            symbol: 'y',
+            power: 2.0,
+            coefficient: 2.0,
+        };
+
+        let value = variable::divide(var1, Variable(var2));
+
+        assert_eq!(value, Ok(Variable(variable {
+            symbol: 'y',
+            power: 1.0,
+            coefficient: 2.5
+        })));
+    }
+
+    #[test]
+    fn divide_variable_by_multiplied_variable(){
+        let var1 = variable {
+            symbol: 'y',
+            power: 3.0,
+            coefficient: 6.0,
+        };
+
+        let var2 = variable{
+            symbol: 'y',
+            power: 2.0,
+            coefficient: 2.0,
+        };
+
+        let var3 = variable{
+            symbol: 'y',
+            power: 5.0,
+            coefficient: 6.0,
+        };
+
+        let value = variable::divide(var1,
+            variable::multiply(var2, Variable(var3)).unwrap()
+        );
+
+        assert_eq!(value, Ok(Variable(variable {
+            symbol: 'y',
+            power: -4.0,
+            coefficient: 0.5
+        })));
+    }
+
+    /* Variable Tests End */
+
+    /* Fraction Tests Start */
+    #[test]
+    fn divide_fraction_by_variable(){
+        let var = variable {
+            symbol: 'y',
+            power: 2.0,
+            coefficient: 4.0,
+        };
+
+        let frac = fraction {
+            numerator: 7,
+            denominator: 4,
+        };
+
+        let value = fraction::divide(frac, Variable(var));
+
+        assert_eq!(value, Ok(Variable(variable {
+            symbol: 'y',
+            power: -2.0,
+            coefficient: 0.4375
+        })));
+    }
+
+    #[test]
+    fn simplify_fraction(){
+        let frac = fraction {
+            numerator: 4,
+            denominator: 12
+        };
+
+        let value = frac.simplify();
+
+        assert_eq!(value, fraction{
+            numerator: 1,
+            denominator: 3
+        });
+    }
+
+    /* Fraction Tests End */
+    #[test]
+    fn find_gcd(){
+        let num1 = 1670;
+        let num2 = 560;
+
+        let value = gcd(num1, num2);
+
+        assert_eq!(value, 10);
     }
 }
